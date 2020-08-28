@@ -1,0 +1,31 @@
+{
+  "name": "chill-clips",
+  "version": "1.0.0-alpha",
+  "description": "A simple private clip uploading website.",
+  "main": "index.js",
+  "repository": "https://github.com/hotlava03/chill-clips",
+  "author": "HotLava03 <tierriff@gmail.com>",
+  "license": "none",
+  "private": true,
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "sqlite3": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "husky": "^3.1.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
+  }
+}
