@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <title>ChillClips Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta property="og:description" content="ChillClips dashboard." />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"
+    type="text/css" />
+  <link href="//cdn.muicss.com/mui-0.10.1/css/mui.min.css" rel="stylesheet" type="text/css" />
+  <script defer="defer" src="assets/dashboard.js"></script>
+  <script defer="defer" src="//cdn.muicss.com/mui-0.10.1/js/mui.min.js"></script>
+  <link href="assets/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  <div class="mui-appbar turquoise-gradient title">
+    <table width="100%">
+      <tr style="vertical-align:middle;">
+        <td class="mui--appbar-height nav-txt"><span>ChillClips</span></td>
+        <td class="mui--appbar-height nav-txt" align="right"><span id="logout">Logout</span></td>
+      </tr>
+    </table>
+  </div>
+  <h2 id="my-clips">My clips</h2>
+  <main class="dashboard">
+    <% clips.forEach(clip => { %>
+    <article id="<%= clip.id %>" class="clip">
+      <div class="container">
+        <img src="thumbnails/<%= clip.id %>.jpg" alt="thumbnail">
+      </div>
+      <% if (!clip.description) clip.description = '(no description)' %>
+      <h3><%= clip.description %></h3>
+    </article>
+    <% }) %>
+  </main>
+  <div id="notif" class="hide"></div>
+  <button id="new" class="mui-btn mui-btn--fab mui-btn--primary turquoise-gradient">+</button>
+  <div id="highlight"><span>Drop that right now.</span></div>
+  <div id="uploadModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+        <h2>Upload clip</h2>
+        <h3>Drag and drop your clip to upload it.</h3>
+      </div>
+      <div class="modal-body input">
+        <form class="mui-form">
+          <div class="mui-textfield mui-textfield--float-label">
+            <textarea id="description"></textarea>
+            <label>Description</label>
+          </div>
+        </form>
+        <div id="links"></div>
+        <button id="upload" class="mui-btn mui-btn--large mui-btn--primary turquoise-gradient btn">Upload</button>
+      </div>
+    </div>
+  </div>
+  <div id="viewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+        <h2>Viewing clip</h2>
+      </div>
+      <div id="videoDiv" class="modal-body">
+      </div>
+      <button id="copy-link" class="mui-btn mui-btn--large mui-btn--primary turquoise-gradient btn">Copy link</button>
+      <button id="delete" class="mui-btn mui-btn--large mui-btn--danger btn">Delete</button>
+    </div>
+  </div>
+</body>
+
+</html>

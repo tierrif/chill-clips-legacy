@@ -14,14 +14,15 @@ window.addEventListener('load', async () => {
     else if (!password.value) return handleEmptyInput(password)
     try {
       // eslint-disable-next-line no-undef
-      const res = await fetch('http://n2.mythicmc.info:42069/login', {
-        headers: { Username: username.value, Password: password.value }
+      const res = await fetch('http://localhost/login', {
+        headers: { username: username.value, password: password.value }
       })
-      if (!res.ok) return err('Invalid credentials.')
-      window.localStorage.setItem('ecthetiger-auth', (await res.json()).token)
+      if (res.status === 401) return err('Username incorrect.')
+      else if (res.status === 403) return err('Password incorrect.')
+      window.localStorage.setItem('chillclips-auth', (await res.json()).token)
       redirect()
     } catch (e) {
-      err('Could not login. Failed to contact Octyne.')
+      err('A fatal error has occured.')
       console.log(e)
     }
   })
@@ -33,7 +34,7 @@ function handleEmptyInput (element) {
 }
 
 function redirect () {
-  window.location.href = 'http://localhost:6969/' // TODO: Change URL, has to be hard coded as this is frontend.
+  window.location.href = 'http://localhost/dashboard' // TODO: Change URL, has to be hard coded as this is frontend.
 }
 
 function err (msg) {

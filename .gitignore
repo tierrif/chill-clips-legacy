@@ -1,3 +1,14 @@
+# Config
+config.json
+accounts.json
+
+# Clips folder
+/clips
+/thumbnails
+
+# Database
+chill-clips.db
+
 # Logs
 logs
 *.log

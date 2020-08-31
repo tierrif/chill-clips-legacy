@@ -2,7 +2,7 @@
   "name": "chill-clips",
   "version": "1.0.0-alpha",
   "description": "A simple private clip uploading website.",
-  "main": "index.js",
+  "main": "backend/index.js",
   "repository": "https://github.com/hotlava03/chill-clips",
   "author": "HotLava03 <tierriff@gmail.com>",
   "license": "none",
@@ -11,7 +11,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.5",
     "express": "^4.17.1",
+    "express-fileupload": "^1.2.0",
+    "ffmpeg-extract-frames": "^2.0.2",
     "sqlite3": "^5.0.0"
   },
   "devDependencies": {
