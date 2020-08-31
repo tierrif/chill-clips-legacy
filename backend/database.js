@@ -28,6 +28,8 @@ const SELECT_CLIP = 'SELECT * FROM clips WHERE id = ?'
 
 const SELECT_CLIPS = 'SELECT * FROM clips'
 
+const SELECT_CLIPS_FROM = 'SELECT * FROM clips WHERE owner = ?'
+
 const DELETE_CLIP = 'DELETE FROM clips WHERE id = ?'
 
 class AppDatabase {
@@ -69,6 +71,11 @@ class AppDatabase {
 
   retrieveAllClips (callback) {
     this.db.all(SELECT_CLIPS, (_err, results) => callback(results))
+  }
+
+  retrieveClipsFrom (user, callback) {
+    console.log(user)
+    this.db.all(SELECT_CLIPS_FROM, [user], (_err, results) => callback(results))
   }
 
   newClip (description, owner, callback) {

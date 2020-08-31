@@ -1,10 +1,11 @@
 (() => {
-  const express = require('express')
-  const fileUpload = require('express-fileupload')
+  const polka = require('polka')
   const path = require('path')
   const cors = require('cors')
   const bodyParser = require('body-parser')
   const AppDatabase = require('./database')
+  const serveStatic = require('serve-static')
+  const Busboy = require('busboy')
   const crypto = require('crypto')
   const ejs = require('ejs')
   const fs = require('fs')
@@ -17,11 +18,8 @@
   console.log('Starting Chill Clips...')
 
   // Create an express instance.
-  const app = express()
+  const app = polka()
 
-  app.use(fileUpload({
-    createParentPath: true
-  }))
   app.use(cors())
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: true }))
@@ -36,9 +34,9 @@
   const db = new AppDatabase(DATABASE_FILE_NAME)
 
   // Declare the endpoints.
-  app.use('/clips', express.static('../clips'))
-  app.use('/thumbnails', express.static('../thumbnails'))
-  app.use('/assets', express.static('../frontend/assets'))
+  app.use('/clips', serveStatic('../clips'))
+  app.use('/thumbnails', serveStatic('../thumbnails'))
+  app.use('/assets', serveStatic('../frontend/assets'))
   app.get('/api/descriptions/:id', (req, res) => {
     db.findDescriptionForClip(req.params.id, result => {
       if (!result) {
@@ -52,36 +50,39 @@
       if (!result) {
         return res.status(404).sendFile(path.join(__dirname, '../frontend/404.html'))
       }
-      const video = `http://localhost/clips/${req.params.id}.mp4`
+      const video = `${config.protocol}://${config.domain}/clips/${req.params.id}.mp4`
       const html = await ejs.renderFile(path.join(__dirname, '../frontend/clip.html'),
         { result: result.description, video: video })
       res.end(html)
     })
   })
-  app.get('/', (_req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')))
+  app.get('/', (_req, res) => {
+    res.setHeader('Content-Type', 'text/html')
+    fs.createReadStream(path.join(__dirname, '../frontend/index.html')).pipe(res)
+  })
   app.get('/auth', (req, res) => {
     const { auth } = req.headers
     db.session(auth, result => {
-      if (!result) res.status(403) // Forbidden.
-      else res.status(200) // Success.
+      if (!result) res.statusCode = '403' // Forbidden.
+      else res.statusCode = '200' // Success.
       res.end()
     })
   })
   app.get('/login', (req, res) => {
     const { username, password } = req.headers
-    if (!username || !password) res.status(400) // Bad request.
+    if (!username || !password) res.statusCode = '400' // Bad request.
     const encodedPass = accounts[username]
     const hash = crypto.createHash('sha256')
     hash.update(password)
     if (!encodedPass) {
-      res.status(401) // Unauthorized (account not found).
+      res.statusCode = '401' // Unauthorized (account not found).
       res.end()
     } else if (encodedPass !== hash.digest('hex')) {
-      res.status(403) // Forbidden (password incorrect).
+      res.statusCode = '403' // Forbidden (password incorrect).
       res.end()
     } else {
       // Success.
-      res.status(200)
+      res.statusCode = '200'
       // Create a token.
       const randomBytes = crypto.randomBytes(32).toString('hex')
       // Verify if the token already exists.
@@ -103,22 +104,29 @@
       })
     }
   })
-  app.get('/dashboard', (_req, res) => {
-    db.retrieveAllClips(async clips => {
-      const html = await ejs.renderFile(path.join(__dirname, '../frontend/dashboard.html'), { clips: clips })
-      res.end(html)
+  app.get('/dashboard/', (req, res) => {
+    const auth = req.headers.cookie.split('=')[1]
+    db.session(auth, result => {
+      if (!result) {
+        res.statusCode = '403' // Forbidden.
+        return res.end()
+      }
+      db.retrieveClipsFrom(result.username, async clips => {
+        const html = await ejs.renderFile(path.join(__dirname, '../frontend/dashboard.html'), { clips: clips })
+        res.end(html)
+      })
     })
   })
   app.get('/delete', (req, res) => {
     const { auth, id } = req.headers
     db.session(auth, result => {
       if (!result) {
-        res.status(403) // Forbidden.
+        res.statusCode = '403' // Forbidden.
         return res.end()
       }
       db.findClipById(id, clip => {
         if (result.username !== clip.owner) {
-          res.status(401) // Unauthorized.
+          res.statusCode = '401' // Unauthorized.
           return res.end()
         }
         db.deleleClip(id)
@@ -130,29 +138,38 @@
   })
   app.post('/upload', (req, res) => {
     const { auth } = req.headers
+    const busBoy = new Busboy({ headers: req.headers })
     db.session(auth, result => {
       if (!result) {
-        res.status(403) // Forbidden.
-        return res.end()
-      }
-      if (!req.files) {
-        res.status(400) // Bad request.
+        res.statusCode = '403' // Forbidden.
         return res.end()
       } else {
-        const file = req.files.file
-        if (!file.name.endsWith('.mp4')) return res.status(401)
-        db.newClip(req.headers.description, result.username, async result => {
-          const id = result
-          file.mv('../clips/' + id + '.mp4')
-          await thumbnail(id)
-          res.status(200)
-          res.end(JSON.stringify({ id: id }))
+        db.newClip(req.headers.description, result.username, id => {
+          busBoy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+            if (!filename.endsWith('.mp4')) {
+              res.statusCode = '401'
+              return res.end()
+            }
+            const saveTo = path.join(__dirname, '../clips/' + id + '.mp4')
+            file.pipe(fs.createWriteStream(saveTo))
+          })
+
+          busBoy.on('finish', async () => {
+            await thumbnail(id) // error
+            res.statusCode = '200'
+            res.end(JSON.stringify({ id: id }))
+          })
+
+          req.pipe(busBoy)
         })
       }
     })
   })
   // 404 default page.
-  app.get('*', (_req, res) => res.status(404).sendFile(path.join(__dirname, '../frontend/404.html')))
+  app.get('*', (_req, res) => {
+    res.statusCode = '404'
+    fs.createReadStream(path.join(__dirname, '../frontend/404.html')).pipe(res)
+  })
 
   // Listen.
   app.listen(config.port)

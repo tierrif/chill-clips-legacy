@@ -1,9 +1,7 @@
 window.addEventListener('load', async () => {
-  // eslint-disable-next-line no-undef
-  const res = await fetch('http://localhost/auth', {
+  const res = await window.fetch('/auth', {
     headers: { auth: window.localStorage.getItem('chillclips-auth') }
   })
-  console.log(res)
   if (res.ok) return redirect()
   document.querySelector('#login-btn').addEventListener('click', async () => {
     const username = document.querySelector('#username')
@@ -13,13 +11,14 @@ window.addEventListener('load', async () => {
     if (!username.value) return handleEmptyInput(username)
     else if (!password.value) return handleEmptyInput(password)
     try {
-      // eslint-disable-next-line no-undef
-      const res = await fetch('http://localhost/login', {
+      const res = await window.fetch('/login', {
         headers: { username: username.value, password: password.value }
       })
       if (res.status === 401) return err('Username incorrect.')
       else if (res.status === 403) return err('Password incorrect.')
-      window.localStorage.setItem('chillclips-auth', (await res.json()).token)
+      const token = (await res.json()).token
+      document.cookie = 'token=' + token
+      window.localStorage.setItem('chillclips-auth', token)
       redirect()
     } catch (e) {
       err('A fatal error has occured.')
@@ -34,7 +33,7 @@ function handleEmptyInput (element) {
 }
 
 function redirect () {
-  window.location.href = 'http://localhost/dashboard' // TODO: Change URL, has to be hard coded as this is frontend.
+  window.location.href = '/dashboard'
 }
 
 function err (msg) {

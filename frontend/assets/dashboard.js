@@ -1,3 +1,5 @@
+const domain = 'http://localhost'
+
 window.addEventListener('load', () => {
   const allFiles = []
   let uploaded = false
@@ -74,16 +76,16 @@ window.addEventListener('load', () => {
     uploaded = true
     for (let i = 0; i < allFiles.length; i++) {
       if (!allFiles[i].name.endsWith('.mp4')) return err('Only mp4 files are supported.')
-      const url = 'http://localhost/upload/'
+      const url = '/upload/'
       const formData = new window.FormData()
       formData.append('file', allFiles[i])
       p.innerHTML = 'Uploading, please wait...'
       const res = await window.fetch(url, { method: 'POST', body: formData, headers: { auth: window.localStorage.getItem('chillclips-auth'), description: document.getElementById('description').value } })
       console.log(res)
       const json = await res.json()
-      p.innerHTML = `http://localhost/clip/${json.id}`
+      p.innerHTML = `${domain}/clip/${json.id}`
       p.classList.add('link')
-      p.addEventListener('click', () => copyToClipboard(`http://localhost/clip/${json.id}`))
+      p.addEventListener('click', () => copyToClipboard(`${domain}/clip/${json.id}`))
     }
   })
 
@@ -120,9 +122,9 @@ window.addEventListener('load', () => {
       video.append(source)
       document.getElementById('videoDiv').prepend(video)
       const buttons = document.getElementById('videoButtons')
-      buttons.getElementsByClassName('btn')[0].onclick = () => copyToClipboard(`http://localhost/clip/${id}`)
+      buttons.getElementsByClassName('btn')[0].onclick = () => copyToClipboard(`${domain}/clip/${id}`)
       buttons.getElementsByClassName('btn')[1].onclick = async () => {
-        const res = await window.fetch('http://localhost/delete', { headers: { auth: window.localStorage.getItem('chillclips-auth'), id: id } })
+        const res = await window.fetch('/delete', { headers: { auth: window.localStorage.getItem('chillclips-auth'), id: id } })
         if (res.ok) window.location.href = '/dashboard'
         else {
           err('Could not contact the server.')
