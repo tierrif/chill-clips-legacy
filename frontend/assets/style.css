@@ -499,7 +499,19 @@ html {
   color: white;
 }
 
-.modal-body {padding: 2px 16px;}
+.modal-body { 
+  padding: 2px 16px;
+}
+
+#videoButtons {
+  margin-top: 20px;
+  text-align: center;
+}
+
+#videoButtons button {
+  display: inline-block;
+  box-shadow: 3px 3px 10px #000000;
+}
 
 @-webkit-keyframes slideIn {
   from {bottom: -300px; opacity: 0} 

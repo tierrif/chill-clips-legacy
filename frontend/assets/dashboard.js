@@ -119,6 +119,16 @@ window.addEventListener('load', () => {
       source.src = `/clips/${id}.mp4`
       video.append(source)
       document.getElementById('videoDiv').prepend(video)
+      const buttons = document.getElementById('videoButtons')
+      buttons.getElementsByClassName('btn')[0].onclick = () => copyToClipboard(`http://localhost/clip/${id}`)
+      buttons.getElementsByClassName('btn')[1].onclick = async () => {
+        const res = await window.fetch('http://localhost/delete', { headers: { auth: window.localStorage.getItem('chillclips-auth'), id: id } })
+        if (res.ok) window.location.href = '/dashboard'
+        else {
+          err('Could not contact the server.')
+          console.log(res)
+        }
+      }
     })
   }
 })

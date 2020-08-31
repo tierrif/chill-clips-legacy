@@ -109,6 +109,25 @@
       res.end(html)
     })
   })
+  app.get('/delete', (req, res) => {
+    const { auth, id } = req.headers
+    db.session(auth, result => {
+      if (!result) {
+        res.status(403) // Forbidden.
+        return res.end()
+      }
+      db.findClipById(id, clip => {
+        if (result.username !== clip.owner) {
+          res.status(401) // Unauthorized.
+          return res.end()
+        }
+        db.deleleClip(id)
+        fs.unlink(path.join(__dirname, `../clips/${id}.mp4`), err => console.log(err || `Deleted ${id}.mp4`))
+        fs.unlink(path.join(__dirname, `../thumbnails/${id}.jpg`), err => console.log(err || `Deleted ${id}.jpg`))
+        res.end()
+      })
+    })
+  })
   app.post('/upload', (req, res) => {
     const { auth } = req.headers
     db.session(auth, result => {
@@ -122,8 +141,8 @@
       } else {
         const file = req.files.file
         if (!file.name.endsWith('.mp4')) return res.status(401)
-        db.newClip(req.headers.description, async result => {
-          const id = result + 1
+        db.newClip(req.headers.description, result.username, async result => {
+          const id = result
           file.mv('../clips/' + id + '.mp4')
           await thumbnail(id)
           res.status(200)

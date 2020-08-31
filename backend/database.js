@@ -12,18 +12,23 @@ const CREATE_USER_TABLE = `CREATE TABLE IF NOT EXISTS users (
 
 const CREATE_CLIP_TABLE = `CREATE TABLE IF NOT EXISTS clips (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    description TEXT
+    description TEXT,
+    owner TEXT
   )`
 
 const SELECT_SESSION = 'SELECT * FROM sessions WHERE token = ?'
 
 const INSERT_INTO_SESSION = 'INSERT INTO sessions (token, username) VALUES (?, ?)'
 
-const INSERT_INTO_CLIPS = 'INSERT INTO clips (description) VALUES (\'?\')'
+const INSERT_INTO_CLIPS = 'INSERT INTO clips (description, owner) VALUES (?, ?)'
 
 const SELECT_CLIP_DESCRIPTION = 'SELECT description FROM clips WHERE id = ?'
 
+const SELECT_CLIP = 'SELECT * FROM clips WHERE id = ?'
+
 const SELECT_CLIPS = 'SELECT * FROM clips'
+
+const DELETE_CLIP = 'DELETE FROM clips WHERE id = ?'
 
 class AppDatabase {
   constructor (path) {
@@ -66,9 +71,17 @@ class AppDatabase {
     this.db.all(SELECT_CLIPS, (_err, results) => callback(results))
   }
 
-  newClip (description, callback) {
-    this.rawExec(INSERT_INTO_CLIPS.replace('?', description))
-    this.retrieveAllClips(clips => callback(clips.length))
+  newClip (description, owner, callback) {
+    this.db.run(INSERT_INTO_CLIPS, [description, owner])
+    this.retrieveAllClips(clips => callback(clips[clips.length - 1].id))
+  }
+
+  findClipById (id, callback) {
+    this.db.get(SELECT_CLIP, [id], (_err, row) => callback(row))
+  }
+
+  deleleClip (id) {
+    this.db.run(DELETE_CLIP, [id])
   }
 
   rawExec (sql) {
